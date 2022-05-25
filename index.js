@@ -37,6 +37,7 @@ async function run() {
         const productsCollection = client.db("paint_basic").collection("products");
         const orderCollection = client.db("paint_basic").collection("orders");
         const userCollection = client.db("paint_basic").collection("user");
+        const reviewCollection = client.db("paint_basic").collection("review");
         //get all products data
         app.get('/products', async (req, res) => {
             const products = await productsCollection.find().toArray()
@@ -50,16 +51,29 @@ async function run() {
             res.send(product);
         })
         // post order 
-        app.post('/orders',async(req,res)=>{
-            const order=req.body;
-            const result=await orderCollection.insertOne(order)
-             res.send(result)
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order)
+            res.send(result)
+        })
+        app.get('/orders/:email',verifyJwt,async(req,res)=>{
+            const email=req.params.email;
+            const query={email}
+            const orders=await orderCollection.find(query).toArray()
+            res.send(orders)
+        })
+        app.delete('/orders/:email',verifyJwt,async(req,res)=>{
+            const email=req.params.email;
+            const filter={email}
+            const result=await orderCollection.deleteOne(filter)
+            res.send(result)
         })
         // jwt token send to cliet side
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            if(!email){return}
+         
+            if (!email) { return }
             const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRATE, { expiresIn: '1h' })
             const filter = { email: email }
             const option = { upsert: true }
@@ -68,6 +82,35 @@ async function run() {
             };
             const result = await userCollection.updateOne(filter, updateDoc, option)
             res.send({ result, token });
+        })
+        // update user
+        app.put('/updateuser/:email',verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const updateUser = req.body;
+           
+            if (!email) { return }
+            
+            const filter = { email: email }
+            const option = { upsert: true }
+            const updateDoc = {
+                $set: updateUser
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, option)
+            res.send({ result });
+        })
+        //post reivew
+        app.post('/reivew',verifyJwt,async(req,res)=>{
+            const reivew=req.body;
+            console.log(reivew)
+            const result=await reviewCollection.insertOne(reivew)
+            res.send(result)
+        })
+        
+        // get user
+        app.get('/user',verifyJwt,async(req,res)=>{
+            const email=req.query.email;
+            const result=await userCollection.findOne({email})
+            res.send(result)
         })
 
     }
