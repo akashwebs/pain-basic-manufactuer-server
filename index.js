@@ -214,7 +214,10 @@ async function run() {
             const isAdmin = user?.role === 'admin'
             res.send({ admin: isAdmin })
         })
-
+        app.get('/allReivew',async(req,res)=>{
+            const result=await reviewCollection.find().toArray();
+            res.send(result)
+        })
 
     }
     finally {
