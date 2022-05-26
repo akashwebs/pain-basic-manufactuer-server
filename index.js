@@ -7,6 +7,7 @@ require('dotenv').config()
 const port = process.env.PORT || 5000;
 const jwt = require('jsonwebtoken');
 const res = require('express/lib/response');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors())
 app.use(express.json())
@@ -88,10 +89,53 @@ async function run() {
             const orders = await orderCollection.find(query).toArray()
             res.send(orders)
         })
+        // get all orders
+        app.get('/orders', verifyJwt,verifyAdmin, async (req, res) => {
+  
+            const orders = await orderCollection.find().toArray()
+            res.send(orders)
+        })
+
+        app.post('/create-payment-intent', verifyJwt, async(req, res) =>{
+            const service = req.body;
+            const price = service.price;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount : amount,
+              currency: 'usd',
+              payment_method_types:['card']
+            });
+            res.send({clientSecret: paymentIntent.client_secret})
+          });
+      
+        
+        
+
+        // update paid stutatus
+        app.put('/orders/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const pay = req.body;
+            
+            if (!id) { return }
+            const filter = { _id:ObjectId(id) }
+            
+            const updateDoc = {
+                $set: pay
+            };
+            const result = await orderCollection.updateOne(filter, updateDoc)
+            res.send({ result });
+        })
         app.delete('/orders/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const filter = { email }
             const result = await orderCollection.deleteOne(filter)
+            res.send(result)
+        })
+        app.get('/paymentOrder/:id',async(req,res)=>{
+            const id=req.params.id;
+
+            const query={_id:ObjectId(id)}
+            const result =await orderCollection.findOne(query)
             res.send(result)
         })
       
@@ -128,7 +172,7 @@ async function run() {
         //post reivew
         app.post('/reivew', verifyJwt, async (req, res) => {
             const reivew = req.body;
-            console.log(reivew)
+           
             const result = await reviewCollection.insertOne(reivew)
             res.send(result)
         })
