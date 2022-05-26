@@ -6,6 +6,7 @@ const { JsonWebTokenError } = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 const jwt = require('jsonwebtoken');
+const res = require('express/lib/response');
 
 app.use(cors())
 app.use(express.json())
@@ -129,6 +130,38 @@ async function run() {
             const result = await userCollection.findOne({ email })
             res.send(result)
         })
+        app.get('/users', verifyJwt, async (req, res) => {
+            const users = await userCollection.find().toArray()
+            res.send(users)
+        })
+        // make admin
+        app.put('/user/admin/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send({ result });
+        })
+
+        // delete user
+        
+        app.delete('/user/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email }
+            const result = await userCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+        // for check role  and sohw user route
+        app.get('/admin/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email })
+            const isAdmin = user?.role === 'admin'
+            res.send({ admin: isAdmin })
+        })
+
 
     }
     finally {
