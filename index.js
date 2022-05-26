@@ -63,9 +63,17 @@ async function run() {
             const product = await productsCollection.findOne(query)
             res.send(product);
         })
+        //add post
         app.post('/product', async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product)
+            res.send(result)
+        })
+        // delet product
+        app.delete('/product/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id:ObjectId(id) }
+            const result = await productsCollection.deleteOne(filter)
             res.send(result)
         })
         // post order 
@@ -86,6 +94,7 @@ async function run() {
             const result = await orderCollection.deleteOne(filter)
             res.send(result)
         })
+      
         // jwt token send to cliet side
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -155,7 +164,7 @@ async function run() {
         })
 
         // for check role  and sohw user route
-        app.get('/admin/:email', verifyJwt, async (req, res) => {
+        app.get('/admin/:email', verifyJwt,verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email })
             const isAdmin = user?.role === 'admin'
