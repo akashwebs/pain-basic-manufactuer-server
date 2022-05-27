@@ -60,18 +60,19 @@ async function run() {
             const products = await productsCollection.find().toArray()
             res.send(products)
         })
-        // get single product data 
-        app.get('/products/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) }
-            const product = await productsCollection.findOne(query)
-            res.send(product);
-        })
+     
         //add post
         app.post('/product', async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product)
             res.send(result)
+        })
+           // get single product data 
+           app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const product = await productsCollection.findOne(query)
+            res.send(product);
         })
         // delet product
         app.delete('/product/:id', verifyJwt, async (req, res) => {
