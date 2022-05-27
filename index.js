@@ -52,6 +52,9 @@ async function run() {
 
         }
 
+      
+        
+        
         //get all products data
         app.get('/products', async (req, res) => {
             const products = await productsCollection.find().toArray()
@@ -108,7 +111,21 @@ async function run() {
             res.send({clientSecret: paymentIntent.client_secret})
           });
       
-        
+        // jwt token send to cliet side
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+
+            if (!email) { return }
+            const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRATE, { expiresIn: '1h' })
+            const filter = { email: email }
+            const option = { upsert: true }
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, option)
+            res.send({ result, token });
+        })
         
 
         // update paid stutatus
@@ -139,21 +156,7 @@ async function run() {
             res.send(result)
         })
       
-        // jwt token send to cliet side
-        app.put('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = req.body;
-
-            if (!email) { return }
-            const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRATE, { expiresIn: '1h' })
-            const filter = { email: email }
-            const option = { upsert: true }
-            const updateDoc = {
-                $set: user
-            };
-            const result = await userCollection.updateOne(filter, updateDoc, option)
-            res.send({ result, token });
-        })
+        
         // update user
         app.put('/updateuser/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
