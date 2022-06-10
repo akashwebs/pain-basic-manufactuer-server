@@ -40,6 +40,7 @@ async function run() {
         const orderCollection = client.db("paint_basic").collection("orders");
         const userCollection = client.db("paint_basic").collection("user");
         const reviewCollection = client.db("paint_basic").collection("review");
+        const portfolio = client.db("portfolio").collection("fakedata");
         // verify admin 
         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
@@ -220,6 +221,11 @@ async function run() {
         })
         app.get('/allReivew',async(req,res)=>{
             const result=await reviewCollection.find().toArray();
+            res.send(result)
+        })
+
+        app.get('/portfoliio',async(req,res)=>{
+            const result=await portfolio.find().toArray();
             res.send(result)
         })
 
